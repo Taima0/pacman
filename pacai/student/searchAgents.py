@@ -13,6 +13,8 @@ from pacai.core.search.position import PositionSearchProblem
 from pacai.core.search.problem import SearchProblem
 from pacai.agents.base import BaseAgent
 from pacai.agents.search.base import SearchAgent
+from pacai.core.directions import Directions 
+from pacai.core.search.heuristic import manhattan
 
 class CornersProblem(SearchProblem):
     """
@@ -63,8 +65,41 @@ class CornersProblem(SearchProblem):
             if not startingGameState.hasFood(*corner):
                 logging.warning('Warning: no food in corner ' + str(corner))
 
+
+        self.initialState = (self.startingPosition, (False, False, False, False))
+
         # *** Your Code Here ***
-        raise NotImplementedError()
+
+    def startingState(self):
+         return self.initialState
+
+    def isGoal(self,state):
+        _, visitedCorners =  state
+        return all(visitedCorners)
+
+    def  successorStates(self, state):
+            position, visitedCorners = state
+
+            successors = []
+            for action in Directions.CARDINAL:
+                x, y = position
+                dx, dy = Actions.directionToVector(action)
+                nextx, nexty = int(x + dx), int(y + dy)
+                hitsWall = self.walls[nextx][nexty]
+
+                if (not hitsWall):
+                    newCorner = list (visitedCorners)
+                    for i, corner in enumerate(self.corners):
+                        if (nextx, nexty) == corner:
+                            newCorner[i] = True
+
+                    nextState = ((nextx, nexty), tuple(newCorner))
+                    successors.append((nextState, action, 1))
+
+            return successors
+        
+        
+    
 
     def actionsCost(self, actions):
         """
@@ -85,6 +120,11 @@ class CornersProblem(SearchProblem):
 
         return len(actions)
 
+def manhattanDistance(position1, position2):
+    x1, y1 = position1
+    x2, y2 = position2
+    return abs(x1 - x2) + abs(y1 - y2)
+
 def cornersHeuristic(state, problem):
     """
     A heuristic for the CornersProblem that you defined.
@@ -98,9 +138,18 @@ def cornersHeuristic(state, problem):
     # Useful information.
     # corners = problem.corners  # These are the corner coordinates
     # walls = problem.walls  # These are the walls of the maze, as a Grid.
-
     # *** Your Code Here ***
-    return heuristic.null(state, problem)  # Default to trivial solution
+
+    position, visitedCorners = state
+    corners = problem.corners
+
+    unvisitedCorners = [corner for i, corner in enumerate(corners) if not visitedCorners[i]]
+    if not unvisitedCorners:
+        return 0
+
+    distances = [manhattanDistance(position, corner) for corner in unvisitedCorners]
+
+    return sum(distances)
 
 def foodHeuristic(state, problem):
     """
@@ -134,7 +183,15 @@ def foodHeuristic(state, problem):
     position, foodGrid = state
 
     # *** Your Code Here ***
-    return heuristic.null(state, problem)  # Default to the null heuristic.
+
+    if foodGrid.count() == 0:
+        return 0
+
+    foodCoordinates = foodGrid.asList()
+
+    distance = [manhattanDistance(position, food) for food in foodCoordinates]
+
+    return max(distance)
 
 class ClosestDotSearchAgent(SearchAgent):
     """

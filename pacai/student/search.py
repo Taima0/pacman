@@ -2,6 +2,7 @@
 In this file, you will implement generic search algorithms which are called by Pacman agents.
 """
 
+
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first [p 85].
@@ -17,9 +18,30 @@ def depthFirstSearch(problem):
     print("Start's successors: %s" % (problem.successorStates(problem.startingState())))
     ```
     """
-
     # *** Your Code Here ***
-    raise NotImplementedError()
+
+    from pacai.util.stack  import Stack
+
+    stack = Stack()
+    stack.push((problem.startingState(), []))
+    visited = set()
+
+    while not stack.isEmpty():
+        state,actions = stack.pop()
+
+        if  state in visited:
+            continue
+
+        visited.add(state)
+
+        if problem.isGoal(state):
+            return actions 
+
+        for successor, action, cost, in problem.successorStates(state):
+            if successor not in visited:
+                new_actions = actions + [action]
+                stack.push((successor, new_actions))
+    return []
 
 def breadthFirstSearch(problem):
     """
@@ -27,20 +49,90 @@ def breadthFirstSearch(problem):
     """
 
     # *** Your Code Here ***
-    raise NotImplementedError()
+
+    from pacai.util.queue  import Queue
+
+    queue = Queue()
+    queue.push((problem.startingState(), []))
+    visited = set()
+
+    while not queue.isEmpty():
+        state,actions = queue.pop()
+
+
+        if state in visited:
+            continue
+
+        visited.add(state)
+
+        if problem.isGoal(state):
+            return actions
+
+        for successor, action, cost, in problem.successorStates(state):
+            if successor not in visited:
+                new_actions = actions + [action]
+                queue.push((successor, new_actions))
+    return []
 
 def uniformCostSearch(problem):
     """
     Search the node of least total cost first.
     """
 
+    from pacai.util.priorityQueue import PriorityQueue
+
     # *** Your Code Here ***
-    raise NotImplementedError()
+
+    priority_queue = PriorityQueue()
+    priority_queue.push((problem.startingState(), [], 0), 0)
+    visited = set()
+
+    while not priority_queue.isEmpty():
+        state,actions, cost = priority_queue.pop()
+
+        if  state in visited:
+            continue
+
+        visited.add(state)
+
+        if problem.isGoal(state):
+            return actions
+
+        for successor, action, dif_cost, in problem.successorStates(state):
+            if successor not in visited:
+                update_cost = cost + dif_cost
+                new_actions = actions + [action]
+                priority_queue.push((successor, new_actions, update_cost), update_cost)
+    return []
 
 def aStarSearch(problem, heuristic):
     """
     Search the node that has the lowest combined cost and heuristic first.
     """
 
+    from pacai.util.priorityQueue import PriorityQueue
+
     # *** Your Code Here ***
-    raise NotImplementedError()
+
+    priority_queue = PriorityQueue()
+    priority_queue.push((problem.startingState(), [], 0), 0)
+    visited = set()
+
+    while not priority_queue.isEmpty():
+        state,actions, cost = priority_queue.pop()
+
+        if  state in visited:
+            continue
+
+        visited.add(state)
+
+        if problem.isGoal(state):
+            return actions
+
+        for successor, action, dif_cost, in problem.successorStates(state):
+            if successor not in visited:
+                update_cost = cost + dif_cost
+                new_actions = actions + [action]
+                priority = update_cost + heuristic(successor, problem)
+                priority_queue.push((successor, new_actions, update_cost), heuristic)
+    return []

@@ -2,7 +2,7 @@ import random
 
 from pacai.agents.base import BaseAgent
 from pacai.agents.search.multiagent import MultiAgentSearchAgent
-
+from pacai.core.distance import manhattan
 class ReflexAgent(BaseAgent):
     """
     A reflex agent chooses an action at each choice point by examining
@@ -35,7 +35,6 @@ class ReflexAgent(BaseAgent):
         bestScore = max(scores)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         chosenIndex = random.choice(bestIndices)  # Pick randomly among the best.
-
         return legalMoves[chosenIndex]
 
     def evaluationFunction(self, currentGameState, action):
@@ -49,6 +48,29 @@ class ReflexAgent(BaseAgent):
         """
 
         successorGameState = currentGameState.generatePacmanSuccessor(action)
+
+        newPosition = successorGameState.getPacmanPosition()
+        newFood=  successorGameState.getFood()
+        newGhostStates = successorGameState.getGhostStates()
+        newScaredTimes = [ghostState.getScaredTimer() for ghostState in newGhostStates]
+
+        score = successorGameState.getScore()
+        foodList=newFood.asList()
+        if len(foodList) > 0:
+            minFoodDistance =min([manhattan(newPosition, food) for food in foodList])
+            score+= 10 / (minFoodDistance + 1)
+
+
+
+            for ghostState in newGhostStates:
+                ghostPos = ghostState.getPosition()
+                ghostDist = manhattan(newPosition, ghostPos)
+                if ghostState.getScaredTimer()> 0:
+                    score += 200 / (ghostDist +1)
+                elif ghostDist < 2:
+                    score -= 1000
+            return score
+
 
         # Useful information you can extract.
         # newPosition = successorGameState.getPacmanPosition()
